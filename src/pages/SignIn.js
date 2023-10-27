@@ -6,7 +6,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useIdentity } from '../providers/IdentityProvider';
 
 function SignIn() {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const { updateIdentity } = useIdentity();
     const navigate = useNavigate();
@@ -16,7 +16,7 @@ function SignIn() {
         e.preventDefault();
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, `${username}@analisisbus.com`, password);
             const user = userCredential.user;
             updateIdentity(user);
             navigate('/');
@@ -25,17 +25,6 @@ function SignIn() {
         }
     };
 
-    const handlePasswordChange = (e) => {
-        const newPassword = e.target.value;
-
-        if (newPassword.length < 8) {
-            setErrorMessage('La contraseña debe tener 8 o más caracteres');
-        } else {
-            setErrorMessage(null);
-        }
-
-        setPassword(newPassword);
-    };
 
     return (
         <Container maxWidth="lg">
@@ -62,12 +51,12 @@ function SignIn() {
                         Iniciar sesión
                     </Typography>
                     <TextField
-                        label="Correo electrónico"
+                        label="Nombre de Usuario"
                         margin="normal"
                         variant="outlined"
                         fullWidth
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                     />
                     <TextField
                         label="Contraseña"
@@ -76,7 +65,7 @@ function SignIn() {
                         fullWidth
                         type="password"
                         value={password}
-                        onChange={handlePasswordChange} // Use the new handler
+                        onChange={(e) => setPassword(e.target.value)}
                     />
                     <Box mt={2}>
                         <Button variant="contained" color="primary" onClick={handleSubmit}>
