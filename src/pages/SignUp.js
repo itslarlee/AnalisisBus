@@ -12,7 +12,11 @@ import MastercardIcon from '../icons/mastercard.svg';
 import AmexIcon from '../icons/amex.svg';
 import CreditCardIcon from '../icons/credit-card.svg';
 import { useFormik } from 'formik';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import * as Yup from 'yup';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Nombre es requerido'),
@@ -20,6 +24,7 @@ const validationSchema = Yup.object({
   username: Yup.string().required('Usuario es requerido'),
   password: Yup.string().matches(/(?=.*[A-Z]).{8,}/, 'La contraseña debe tener al menos 8 caracteres y al menos una letra mayúscula').required('Contraseña es requerida'),
   cardNumber: Yup.string().required('Número de tarjeta es requerido'),
+  birthdate: Yup.date().required('Fecha de nacimiento es requerida').nullable(),
   cvv: Yup.string().matches(/^\d{3}$/, 'CVV inválido').required('CVV es requerido'),
   expiryDate: Yup.string().matches(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Fecha de vencimiento inválida. Debe ser en formato MM/AA').required('Fecha de vencimiento es requerida'),
 });
@@ -38,6 +43,7 @@ function SignUp() {
       cardNumber: '',
       cvv: '',
       expiryDate: '',
+      birthdate: null,
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
@@ -48,8 +54,12 @@ function SignUp() {
         await setDoc(doc(db, 'users', user.uid), {
           name: values.name,
           lastName: values.lastName,
-          email: values.email,
-          role: UserRoles.USUARIO,
+          username: values.username,
+          cardNumber: values.cardNumber,
+          cvv: values.cvv,
+          expiryDate: values.expiryDate,
+          birthdate: new Date(values.birthdate),
+          role: UserRoles.CLIENTE,
           balance: 0
         });
 
@@ -89,6 +99,7 @@ function SignUp() {
       setCardType(null);
     }
   };
+
 
   return (
     <Container maxWidth="sm">
@@ -155,6 +166,20 @@ function SignUp() {
           helperText={formik.touched.password && formik.errors.password}
           name="password"
         />
+
+
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Fecha de Nacimiento"
+            value={formik.values.birthdate}
+            onChange={(newValue) => formik.setFieldValue('birthdate', newValue)}
+            onBlur={formik.handleBlur('birthdate')}
+            error={formik.touched.birthdate && Boolean(formik.errors.birthdate)}
+            helperText={formik.touched.birthdate && formik.errors.birthdate}
+            renderInput={(params) => <TextField {...params} fullWidth />}
+            name="birthdate"
+          />
+        </LocalizationProvider>
 
         <TextField
           label="Número de tarjeta"

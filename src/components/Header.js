@@ -10,18 +10,76 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { useIdentity } from '../providers/IdentityProvider';
+import { doc, getDoc } from 'firebase/firestore';
+import { UserRoles } from '../constants/constants';
 
-const pages = ['Rutinas', 'Dietas', 'Blogs', 'Admin'];
-const settings = ['Perfil', 'Cerrar Sesión'];
+
 
 function Header() {
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [anchorElUser, setAnchorElUser] = React.useState(null);
     const navigate = useNavigate();
-    const { updateIdentity } = useIdentity();
+    const { updateIdentity, user } = useIdentity();
+    const [currentUser, setCurrentUser] = React.useState()
+    const [headerTabs, setHeaderTabs] = React.useState([])
+    const [headerSettings, setHeaderSettings] = React.useState([])
+
+    async function getUserByUid(uid) {
+        try {
+            const userRef = doc(db, 'users', uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                return userSnap.data();
+            } else {
+                console.log("No such user!");
+                return null;
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    }
+
+
+    React.useEffect(() => {
+        if (user && user.uid) {
+            getUserByUid(user.uid).then(userData => {
+                setCurrentUser(userData);
+            });
+        }
+    }, [user]);
+
+
+    React.useEffect(() => {
+        if (currentUser && currentUser.role) {
+
+            switch (currentUser.role) {
+                case UserRoles.CLIENTE:
+                    setHeaderTabs(['Cliente'])
+                    setHeaderSettings(['Perfil', 'Cerrar Sesión'])
+                    break;
+                case UserRoles.CHOFER:
+                    setHeaderTabs(['Chofer'])
+                    setHeaderSettings(['Perfil', 'Cerrar Sesión'])
+                    break;
+                case UserRoles.ADMIN:
+                    setHeaderTabs(['Admin'])
+                    setHeaderSettings(['Perfil', 'Cerrar Sesión'])
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+    }, [currentUser]);
+
+
+
+
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
@@ -75,28 +133,28 @@ function Header() {
                         onClose={handleCloseNavMenu}
                         sx={{ display: { xs: 'block', md: 'none' } }}
                     >
-                        {pages.map((page) => (
+                        {headerTabs.map((tab) => (
                             <MenuItem
-                                key={page}
+                                key={tab}
                                 onClick={handleCloseNavMenu}
                                 component={RouterLink}
-                                to={`/${page.toLowerCase()}`}
+                                to={`/${tab.toLowerCase()}`}
                             >
-                                {page}
+                                {tab}
                             </MenuItem>
                         ))}
                     </Menu>
 
                     {/* Navigation Buttons */}
                     <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                        {pages.map((page) => (
+                        {headerTabs.map((tab) => (
                             <Button
-                                key={page}
+                                key={tab}
                                 color="inherit"
                                 component={RouterLink}
-                                to={`/${page.toLowerCase()}`}
+                                to={`/${tab.toLowerCase()}`}
                             >
-                                {page}
+                                {tab}
                             </Button>
                         ))}
                     </Box>
@@ -122,7 +180,7 @@ function Header() {
                         open={Boolean(anchorElUser)}
                         onClose={handleCloseUserMenu}
                     >
-                        {settings.map((setting) => (
+                        {headerSettings.map((setting) => (
                             <MenuItem
                                 key={setting}
                                 onClick={
