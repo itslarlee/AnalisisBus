@@ -1,57 +1,92 @@
 import React, { useState } from 'react';
-import { Box, Container, Typography, TextField, Button, } from '@mui/material';
+import { Box, Container, Typography, TextField, Button, InputAdornment, Grid, } from '@mui/material';
 import { UserRoles } from '../constants/constants';
 import { Link, useNavigate } from 'react-router-dom';
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useIdentity } from '../providers/IdentityProvider';
+import creditCardType from 'credit-card-type';
+import VisaIcon from '../icons/visa.svg';
+import MastercardIcon from '../icons/mastercard.svg';
+import AmexIcon from '../icons/amex.svg';
+import CreditCardIcon from '../icons/credit-card.svg';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const validationSchema = Yup.object({
+  name: Yup.string().required('Nombre es requerido'),
+  lastName: Yup.string().required('Apellido es requerido'),
+  username: Yup.string().required('Usuario es requerido'),
+  password: Yup.string().matches(/(?=.*[A-Z]).{8,}/, 'La contraseña debe tener al menos 8 caracteres y al menos una letra mayúscula').required('Contraseña es requerida'),
+  cardNumber: Yup.string().required('Número de tarjeta es requerido'),
+  cvv: Yup.string().matches(/^\d{3}$/, 'CVV inválido').required('CVV es requerido'),
+  expiryDate: Yup.string().matches(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Fecha de vencimiento inválida. Debe ser en formato MM/AA').required('Fecha de vencimiento es requerida'),
+});
 
 function SignUp() {
   const { updateIdentity } = useIdentity();
   const navigate = useNavigate();
+  const [cardType, setCardType] = useState(null);
 
-  const [name, setName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordValid, setPasswordValid] = useState(true);
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      lastName: '',
+      username: '',
+      password: '',
+      cardNumber: '',
+      cvv: '',
+      expiryDate: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: async (values) => {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, `${values.username}@analisisbus.com`, values.password);
+        const user = userCredential.user;
 
+        await setDoc(doc(db, 'users', user.uid), {
+          name: values.name,
+          lastName: values.lastName,
+          email: values.email,
+          role: UserRoles.USUARIO,
+          balance: 0
+        });
 
-  const validatePassword = (password) => {
-    const regex = /^(?=.*[A-Z]).{8,}$/;
-    return regex.test(password);
-  };
+        updateIdentity(user);
+        navigate('/');
+      } catch (error) {
+        console.error('Error al registrarse con correo electrónico y contraseña', error);
+      }
+    },
+  });
 
-  const handlePasswordChange = (event) => {
-    const newPassword = event.target.value;
-    setPassword(newPassword);
-    setPasswordValid(validatePassword(newPassword));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!passwordValid) {
-      return;
+  const getCardIcon = (cardType) => {
+    switch (cardType) {
+      case 'visa':
+        return <img width="40" height="40" src={VisaIcon} alt="Visa Icon" />;
+      case 'mastercard':
+        return <img width="40" height="40" src={MastercardIcon} alt="Mastercard Icon" />;
+      case 'american-express':
+        return <img width="40" height="40" src={AmexIcon} alt="American Express Icon" />;
+      default:
+        return <img width="40" height="40" src={CreditCardIcon} alt="Credit Card Icon" />;
     }
+  }
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
 
-      await setDoc(doc(db, 'users', user.uid), {
-        name: name,
-        lastName: lastName,
-        email: email,
-        role: UserRoles.USUARIO
-      });
-
-      updateIdentity(user);
-      navigate('/');
-
-    } catch (error) {
-      console.error('Error al registrarse con correo electrónico y contraseña', error);
+  const handleCardNumberChange = (event) => {
+    const newCardNumber = event.target.value;
+    formik.setFieldValue('cardNumber', newCardNumber);
+    if (newCardNumber) {
+      const cardTypeInfo = creditCardType(newCardNumber);
+      if (cardTypeInfo && cardTypeInfo.length > 0) {
+        setCardType(cardTypeInfo[0].type);
+      } else {
+        setCardType(null);
+      }
+    } else {
+      setCardType(null);
     }
   };
 
@@ -74,24 +109,38 @@ function SignUp() {
           margin="normal"
           variant="outlined"
           fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={formik.values.name}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.name && Boolean(formik.errors.name)}
+          helperText={formik.touched.name && formik.errors.name}
+          name="name"
         />
+
         <TextField
           label="Apellido"
           margin="normal"
           variant="outlined"
           fullWidth
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          value={formik.values.lastName}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+          helperText={formik.touched.lastName && formik.errors.lastName}
+          name="lastName"
         />
+
         <TextField
-          label="Correo electrónico"
+          label="Usuario"
           margin="normal"
           variant="outlined"
           fullWidth
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={formik.values.username}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.username && Boolean(formik.errors.username)}
+          helperText={formik.touched.username && formik.errors.username}
+          name="username"
         />
         <TextField
           label="Contraseña"
@@ -99,20 +148,74 @@ function SignUp() {
           variant="outlined"
           fullWidth
           type="password"
-          value={password}
-          onChange={handlePasswordChange}
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.password && Boolean(formik.errors.password)}
+          helperText={formik.touched.password && formik.errors.password}
+          name="password"
         />
-        {!passwordValid && (
-          <Typography variant="body2" color="error">
-            La contraseña debe tener al menos 8 caracteres y al menos una letra mayúscula.
-          </Typography>
-        )}
+
+        <TextField
+          label="Número de tarjeta"
+          margin="normal"
+          variant="outlined"
+          fullWidth
+          value={formik.values.cardNumber}
+          onChange={handleCardNumberChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.cardNumber && Boolean(formik.errors.cardNumber)}
+          helperText={formik.touched.cardNumber && formik.errors.cardNumber}
+          name="cardNumber"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                {getCardIcon(cardType)}
+              </InputAdornment>
+            )
+          }}
+        />
+
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <TextField
+              label="CVV"
+              margin="normal"
+              variant="outlined"
+              fullWidth
+              value={formik.values.cvv}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.cvv && Boolean(formik.errors.cvv)}
+              helperText={formik.touched.cvv && formik.errors.cvv}
+              name="cvv"
+              inputProps={{ maxLength: 3 }}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              label="Fecha de Vencimiento"
+              margin="normal"
+              variant="outlined"
+              fullWidth
+              value={formik.values.expiryDate}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.expiryDate && Boolean(formik.errors.expiryDate)}
+              helperText={formik.touched.expiryDate && formik.errors.expiryDate}
+              name="expiryDate"
+              placeholder="MM/AA"
+              inputProps={{ maxLength: 5 }}
+            />
+          </Grid>
+        </Grid>
+
         <Box mt={2}>
           <Button
             variant="contained"
             color="primary"
-            onClick={handleSubmit}
-            disabled={!passwordValid}
+            onClick={formik.handleSubmit}
+            disabled={!formik.isValid}
           >
             Registrarse
           </Button>
