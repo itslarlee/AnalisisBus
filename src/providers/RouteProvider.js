@@ -4,6 +4,7 @@ import SignUp from '../pages/SignUp';
 import PageWrapper from '../components/PageWrapper';
 import Header from '../components/Header';
 import { useIdentity } from './IdentityProvider';
+import Perfil from '../pages/Perfil';
 
 // AuthRoute component
 const AuthRoute = ({ children }) => {
@@ -26,6 +27,17 @@ function RouteProvider() {
                 <AuthRoute>
                     <Header />
                     <PageWrapper >
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/perfil',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <Perfil />
                     </PageWrapper>
                 </AuthRoute>
             ),

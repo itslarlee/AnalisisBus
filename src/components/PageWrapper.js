@@ -3,8 +3,8 @@ import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 
 
-function PageWrapper({ children,linksFondos }) {
-        return (
+function PageWrapper({ children, linksFondos }) {
+    return (
         <Box
             sx={{
                 display: 'flex',
@@ -15,8 +15,8 @@ function PageWrapper({ children,linksFondos }) {
                 pt: 3,
                 pb: 3,
             }}
-            
-            
+
+
         >
             <Paper
                 sx={{
@@ -24,9 +24,9 @@ function PageWrapper({ children,linksFondos }) {
                     height: '90%', // This makes the paper take up 80% of the height of its container
                     overflow: 'auto', // This allows the content to scroll if it overflows the height of the paper
                     p: 2,
-                    backgroundImage: `url(${process.env.PUBLIC_URL}${linksFondos})`
+                    background: '#f0f0f5'
                 }}
-                
+
             >
                 {children}
             </Paper>
