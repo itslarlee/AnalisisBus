@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Container, Typography, TextField, Button, InputAdornment, Grid, } from '@mui/material';
+import { Box, Container, Typography, TextField, Button, InputAdornment, Grid, Alert, } from '@mui/material';
 import { UserRoles } from '../constants/constants';
 import { Link, useNavigate } from 'react-router-dom';
 import { doc, setDoc } from "firebase/firestore";
@@ -14,17 +14,22 @@ import CreditCardIcon from '../icons/credit-card.svg';
 import { useFormik } from 'formik';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import * as Yup from 'yup';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import useCrypto from '../hooks/useCrypto';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Nombre es requerido'),
   lastName: Yup.string().required('Apellido es requerido'),
   username: Yup.string().required('Usuario es requerido'),
   password: Yup.string().matches(/(?=.*[A-Z]).{8,}/, 'La contraseña debe tener al menos 8 caracteres y al menos una letra mayúscula').required('Contraseña es requerida'),
-  cardNumber: Yup.string().required('Número de tarjeta es requerido'),
-  birthdate: Yup.date().required('Fecha de nacimiento es requerida').nullable(),
+  cardNumber: Yup.string()
+    .required('Número de tarjeta es requerido')
+    .matches(/^(?:\d{4}[- ]?){3}\d{4}$/, 'Número de tarjeta inválido. Debe tener 16 dígitos y puede estar separado por espacios o guiones cada 4 dígitos'),
+  birthdate: Yup.date()
+    .nullable()
+    .required('Fecha de nacimiento es requerida')
+    .typeError('Fecha de nacimiento es requerida'),
   cvv: Yup.string().matches(/^\d{3}$/, 'CVV inválido').required('CVV es requerido'),
   expiryDate: Yup.string().matches(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Fecha de vencimiento inválida. Debe ser en formato MM/AA').required('Fecha de vencimiento es requerida'),
 });
@@ -33,6 +38,10 @@ function SignUp() {
   const { updateIdentity } = useIdentity();
   const navigate = useNavigate();
   const [cardType, setCardType] = useState(null);
+  const { encrypt } = useCrypto();
+  const [errorMessage, setErrorMessage] = useState(null);
+
+
 
   const formik = useFormik({
     initialValues: {
@@ -55,9 +64,9 @@ function SignUp() {
           name: values.name,
           lastName: values.lastName,
           username: values.username,
-          cardNumber: values.cardNumber,
-          cvv: values.cvv,
-          expiryDate: values.expiryDate,
+          cardNumber: encrypt(values.cardNumber),
+          cvv: encrypt(values.cvv),
+          expiryDate: encrypt(values.expiryDate),
           birthdate: new Date(values.birthdate),
           role: UserRoles.CLIENTE,
           balance: 0
@@ -66,7 +75,13 @@ function SignUp() {
         updateIdentity(user);
         navigate('/');
       } catch (error) {
-        console.error('Error al registrarse con correo electrónico y contraseña', error);
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            setErrorMessage('Nombre de usuario ya está en uso')
+            break;
+          default:
+            break;
+        }
       }
     },
   });
@@ -248,7 +263,11 @@ function SignUp() {
         <Typography variant="body1" align="center">
           ¿Ya tienes una cuenta? <Link to="/signin">Iniciar sesión</Link>
         </Typography>
+        <Box>
+          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+        </Box>
       </Box>
+
     </Container>
   );
 }

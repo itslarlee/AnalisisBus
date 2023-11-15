@@ -15,13 +15,17 @@ function SignIn() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, `${username}@analisisbus.com`, password);
-            const user = userCredential.user;
-            updateIdentity(user);
-            navigate('/');
-        } catch (error) {
-            setErrorMessage('Hubo un error iniciando sesión');
+        if (username === '' || password === '') {
+            setErrorMessage('Por favor ingrese las credenciales');
+        } else {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, `${username}@analisisbus.com`, password);
+                const user = userCredential.user;
+                updateIdentity(user);
+                navigate('/');
+            } catch (error) {
+                setErrorMessage('El correo/contraseña ingresado es inválido');
+            }
         }
     };
 
