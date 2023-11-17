@@ -115,7 +115,7 @@ function Rutas() {
                                 <TableCell>{ruta.cantonOrigen}</TableCell>
                                 <TableCell>{ruta.provinciaDestino}</TableCell>
                                 <TableCell>{ruta.cantonDestino}</TableCell>
-                                <TableCell>{ruta.costoRuta}</TableCell>
+                                <TableCell>₡{ruta.costoRuta}</TableCell>
                                 <TableCell>
                                     <IconButton onClick={() => handleOpenModal(ruta)}>
                                         <EditIcon />

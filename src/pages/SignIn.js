@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Box, Container, Typography, TextField, Button, Alert } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useIdentity } from '../providers/IdentityProvider';
+import { doc, getDoc } from 'firebase/firestore';
 
 function SignIn() {
     const [username, setUsername] = useState('');
@@ -17,17 +18,26 @@ function SignIn() {
 
         if (username === '' || password === '') {
             setErrorMessage('Por favor ingrese las credenciales');
-        } else {
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, `${username}@analisisbus.com`, password);
-                const user = userCredential.user;
-                updateIdentity(user);
+            return;
+        }
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, `${username}@analisisbus.com`, password);
+            const userRef = doc(db, 'users', userCredential.user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists() && userSnap.data().deactivated) {
+                setErrorMessage('La cuenta está desactivada.');
+                await auth.signOut();
+            } else {
+                updateIdentity(userCredential.user);
                 navigate('/');
-            } catch (error) {
-                setErrorMessage('El correo/contraseña ingresado es inválido');
             }
+        } catch (error) {
+            setErrorMessage('El correo/contraseña ingresado es inválido');
         }
     };
+
 
 
     return (

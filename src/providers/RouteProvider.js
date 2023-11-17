@@ -7,6 +7,7 @@ import { useIdentity } from './IdentityProvider';
 import Perfil from '../pages/Perfil';
 import Choferes from '../pages/Choferes';
 import Rutas from '../pages/Rutas';
+import Clientes from '../pages/Clientes';
 
 // AuthRoute component
 const AuthRoute = ({ children }) => {
@@ -51,6 +52,17 @@ function RouteProvider() {
                     <Header />
                     <PageWrapper >
                         <Choferes />
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/clientes',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <Clientes />
                     </PageWrapper>
                 </AuthRoute>
             ),

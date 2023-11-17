@@ -67,7 +67,8 @@ function UserForm({ setErrorMessage, updateAuth = false, role = UserRoles.CLIENT
                     expiryDate: encrypt(values.expiryDate),
                     birthdate: new Date(values.birthdate),
                     role: role,
-                    balance: 0
+                    balance: 0,
+                    deactivated: false
                 });
 
                 if (updateAuth) {

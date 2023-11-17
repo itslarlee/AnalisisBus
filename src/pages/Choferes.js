@@ -88,6 +88,7 @@ function Choferes() {
                             <TableRow>
                                 <TableCell>Nombre</TableCell>
                                 <TableCell>Apellido</TableCell>
+                                <TableCell>Nombre de Usuario</TableCell>
                                 {/* <TableCell></TableCell> */}
                             </TableRow>
                         </TableHead>
@@ -99,6 +100,9 @@ function Choferes() {
                                     </TableCell>
                                     <TableCell>
                                         {chofer.lastName}
+                                    </TableCell>
+                                    <TableCell>
+                                        {chofer.username}
                                     </TableCell>
                                     {/* <TableCell>
                                     <IconButton onClick={() => handleDelete(chofer.id)}>
