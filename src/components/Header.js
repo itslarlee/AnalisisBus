@@ -58,15 +58,15 @@ function Header() {
 
             switch (currentUser.role) {
                 case UserRoles.CLIENTE:
-                    setHeaderTabs(['Cliente'])
+                    setHeaderTabs(['Reportes'])
                     setHeaderSettings(['Perfil', 'Cerrar Sesión'])
                     break;
                 case UserRoles.CHOFER:
-                    setHeaderTabs(['Chofer'])
+                    setHeaderTabs(['Cobrar', 'Reportes'])
                     setHeaderSettings(['Perfil', 'Cerrar Sesión'])
                     break;
                 case UserRoles.ADMIN:
-                    setHeaderTabs(['Admin'])
+                    setHeaderTabs(['Choferes', 'Clientes', 'Rutas'])
                     setHeaderSettings(['Perfil', 'Cerrar Sesión'])
                     break;
 

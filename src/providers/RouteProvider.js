@@ -5,6 +5,8 @@ import PageWrapper from '../components/PageWrapper';
 import Header from '../components/Header';
 import { useIdentity } from './IdentityProvider';
 import Perfil from '../pages/Perfil';
+import Choferes from '../pages/Choferes';
+import Rutas from '../pages/Rutas';
 
 // AuthRoute component
 const AuthRoute = ({ children }) => {
@@ -38,6 +40,28 @@ function RouteProvider() {
                     <Header />
                     <PageWrapper >
                         <Perfil />
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/choferes',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <Choferes />
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/rutas',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <Rutas />
                     </PageWrapper>
                 </AuthRoute>
             ),
