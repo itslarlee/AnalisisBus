@@ -8,6 +8,7 @@ import Perfil from '../pages/Perfil';
 import Choferes from '../pages/Choferes';
 import Rutas from '../pages/Rutas';
 import Clientes from '../pages/Clientes';
+import Cobrar from '../pages/Cobrar';
 
 // AuthRoute component
 const AuthRoute = ({ children }) => {
@@ -74,6 +75,17 @@ function RouteProvider() {
                     <Header />
                     <PageWrapper >
                         <Rutas />
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/cobrar',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <Cobrar />
                     </PageWrapper>
                 </AuthRoute>
             ),

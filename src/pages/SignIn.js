@@ -31,7 +31,15 @@ function SignIn() {
                 await auth.signOut();
             } else {
                 updateIdentity(userCredential.user);
-                navigate('/');
+                if (userSnap.data().role === 'Chofer') {
+                    navigate('/cobrar');
+                }
+                if (userSnap.data().role === 'Admin') {
+                    navigate('/rutas');
+                }
+                if (userSnap.data().role === 'Cliente') {
+                    navigate('/perfil');
+                }
             }
         } catch (error) {
             setErrorMessage('El correo/contraseña ingresado es inválido');

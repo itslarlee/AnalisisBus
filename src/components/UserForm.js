@@ -73,7 +73,7 @@ function UserForm({ setErrorMessage, updateAuth = false, role = UserRoles.CLIENT
 
                 if (updateAuth) {
                     updateIdentity(user);
-                    navigate('/');
+                    navigate('/perfil');
                 }
 
                 if (handleCloseModal) {
