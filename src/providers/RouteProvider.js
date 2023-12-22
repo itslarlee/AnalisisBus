@@ -9,6 +9,8 @@ import Choferes from '../pages/Choferes';
 import Rutas from '../pages/Rutas';
 import Clientes from '../pages/Clientes';
 import Cobrar from '../pages/Cobrar';
+import ReportesClientes from '../pages/ReportesClientes';
+import ReportesChofer from '../pages/ReportesChofer';
 
 // AuthRoute component
 const AuthRoute = ({ children }) => {
@@ -31,6 +33,7 @@ function RouteProvider() {
                 <AuthRoute>
                     <Header />
                     <PageWrapper >
+                        <Perfil />
                     </PageWrapper>
                 </AuthRoute>
             ),
@@ -86,6 +89,28 @@ function RouteProvider() {
                     <Header />
                     <PageWrapper >
                         <Cobrar />
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/reportes-cliente',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <ReportesClientes />
+                    </PageWrapper>
+                </AuthRoute>
+            ),
+        },
+        {
+            path: '/reportes-chofer',
+            element: (
+                <AuthRoute>
+                    <Header />
+                    <PageWrapper >
+                        <ReportesChofer />
                     </PageWrapper>
                 </AuthRoute>
             ),

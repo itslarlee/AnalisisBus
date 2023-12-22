@@ -5,8 +5,7 @@ import { Box, Container, Typography, TextField, Button, MenuItem, Select, InputL
 import { useIdentity } from '../providers/IdentityProvider';
 
 function Cobrar() {
-    const [rutas, setRutas] = useState([]);
-    const [selectedRoute, setSelectedRoute] = useState('');
+    const [ruta, setRuta] = useState(null);
     const [username, setUsername] = useState('');
     const [costoRuta, setCostoRuta] = useState(0);
     const { user } = useIdentity();
@@ -22,19 +21,36 @@ function Cobrar() {
         }
         setSnackbar({ ...snackbar, open: false });
     };
+
     useEffect(() => {
-        const fetchRutas = async () => {
-            const querySnapshot = await getDocs(collection(db, 'rutas'));
-            setRutas(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const fetchRutaChofer = async () => {
+            const choferRef = doc(db, 'users', user.uid);
+            const choferSnap = await getDoc(choferRef);
+
+            if (choferSnap.exists()) {
+                const choferData = choferSnap.data();
+                // Ahora se realiza una consulta a la colección 'rutas' para encontrar la ruta con el código correspondiente
+                const rutasRef = collection(db, 'rutas');
+                const q = query(rutasRef, where('codigoRuta', '==', choferData.codigoRuta));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    // Suponiendo que cada código de ruta es único, tomaremos el primer documento
+                    const rutaData = querySnapshot.docs[0].data();
+                    setRuta(rutaData);
+                    setCostoRuta(rutaData.costoRuta);
+                } else {
+                    console.error('No se encontró una ruta con el código asignado al chofer');
+                    // Puedes manejar este caso como consideres necesario
+                }
+            } else {
+                console.error('El chofer no está registrado en la base de datos');
+                // Manejar este caso como consideres necesario
+            }
         };
 
-        fetchRutas();
-    }, []);
-
-    useEffect(() => {
-        const ruta = rutas.find(r => r.codigoRuta === selectedRoute);
-        setCostoRuta(ruta ? ruta.costoRuta : 0);
-    }, [selectedRoute, rutas]);
+        fetchRutaChofer();
+    }, [user.uid]);
 
     const handleCobrar = async () => {
         // Suponiendo que user.uid es el UID del chofer actualmente autenticado
@@ -84,7 +100,7 @@ function Cobrar() {
                 const failedChargeData = {
                     usernameCliente: username,
                     usernameChofer: usernameChofer, // Asegúrate de obtener el nombre de usuario del chofer de choferData
-                    codigoRuta: selectedRoute,
+                    codigoRuta: ruta.codigoRuta,
                     fecha: new Date(),
                     costo: costoRuta,
                 };
@@ -103,7 +119,7 @@ function Cobrar() {
 
             // Agrega el documento a la colección 'charges'
             const chargeData = {
-                codigoRuta: selectedRoute,
+                codigoRuta: ruta.codigoRuta,
                 costo: costoRuta,
                 usernameCliente: username,
                 usernameChofer: usernameChofer,
@@ -119,9 +135,7 @@ function Cobrar() {
             });
 
             // Resetea los campos del formulario a su estado inicial
-            setSelectedRoute('');
             setUsername('');
-            setCostoRuta(0);
 
         } catch (error) {
             console.log(error);
@@ -132,29 +146,15 @@ function Cobrar() {
 
     return (
         <>
-
             <Container maxWidth="sm">
                 <Typography variant="h4" gutterBottom>
                     Cobrar
                 </Typography>
-                <FormControl fullWidth>
-                    <InputLabel id="ruta-select-label">Código de Ruta</InputLabel>
-                    <Select
-                        labelId="ruta-select-label"
-                        value={selectedRoute}
-                        label="Código de Ruta"
-                        onChange={(e) => setSelectedRoute(e.target.value)}
-                    >
-                        {rutas.map((ruta) => (
-                            <MenuItem key={ruta.id} value={ruta.codigoRuta}>
-                                {ruta.codigoRuta}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                    Precio: ₡{costoRuta}
-                </Typography>
+                {ruta && (
+                    <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                        Ruta Asignada: {ruta.nombreRuta} - Costo: ₡{costoRuta}
+                    </Typography>
+                )}
                 <TextField
                     label="Nombre de Usuario"
                     fullWidth
@@ -166,7 +166,7 @@ function Cobrar() {
                     <Button
                         variant="contained"
                         onClick={handleCobrar}
-                        disabled={!selectedRoute || !username}
+                        disabled={!ruta || !username}
                     >
                         Cobrar
                     </Button>

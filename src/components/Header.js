@@ -58,13 +58,11 @@ function Header() {
 
             switch (currentUser.role) {
                 case UserRoles.CLIENTE:
-                    // setHeaderTabs(['Reportes'])
-                    setHeaderTabs([''])
+                    setHeaderTabs(['Reportes Cliente'])
                     setHeaderSettings(['Perfil', 'Cerrar Sesión'])
                     break;
                 case UserRoles.CHOFER:
-                    // setHeaderTabs(['Cobrar', 'Reportes'])
-                    setHeaderTabs(['Cobrar'])
+                    setHeaderTabs(['Cobrar', 'Reportes Chofer'])
                     setHeaderSettings(['Perfil', 'Cerrar Sesión'])
                     break;
                 case UserRoles.ADMIN:
@@ -154,11 +152,12 @@ function Header() {
                                 key={tab}
                                 color="inherit"
                                 component={RouterLink}
-                                to={`/${tab.toLowerCase()}`}
+                                to={`/${tab.toLowerCase().replace(/\s/g, '-')}`}
                             >
                                 {tab}
                             </Button>
                         ))}
+
                     </Box>
 
                     {/* User Avatar */}

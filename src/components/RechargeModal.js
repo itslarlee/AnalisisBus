@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Button, Modal, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, Grid, Button, Modal, Snackbar, Alert, TextField } from '@mui/material';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useIdentity } from '../providers/IdentityProvider';
@@ -17,21 +17,24 @@ const modalStyle = {
 
 const RechargeModal = ({ open, handleClose, rechargeOptions, setBalance }) => {
     const { user } = useIdentity();
-    const [selectedAmount, setSelectedAmount] = useState(null);
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [amountToRecharge, setAmountToRecharge] = useState('');
+
+
 
     const handleRechargeClick = async () => {
-        if (user && selectedAmount !== null) {
+        const amount = Number(amountToRecharge);
+        if (user && !isNaN(amount) && amount > 0) {
             const userRef = doc(db, 'users', user.uid);
             try {
                 await updateDoc(userRef, {
-                    balance: increment(selectedAmount)
+                    balance: increment(amountToRecharge)
                 });
-                setBalance(prevBalance => prevBalance + selectedAmount);
-                setSnackbarMessage(`₡${selectedAmount.toLocaleString()} añadido correctamente!`);
+                setBalance(prevBalance => Number(prevBalance) + amount);
+                setSnackbarMessage(`₡${amountToRecharge.toLocaleString()} añadido correctamente!`);
                 setOpenSnackbar(true);
-                setSelectedAmount(null)
+                setAmountToRecharge('')
                 handleClose(); // Cierra el modal después de la recarga
             } catch (error) {
                 console.error('Error al añadir saldo: ', error);
@@ -41,8 +44,17 @@ const RechargeModal = ({ open, handleClose, rechargeOptions, setBalance }) => {
         }
     };
 
+    const handleCustomAmountChange = (event) => {
+        const value = event.target.value;
+        const re = /^[0-9\b]+$/; // Regex para permitir solo números
+
+        if (value === '' || re.test(value)) {
+            setAmountToRecharge(value);
+        }
+    };
+
     const handleAmountSelection = (amount) => {
-        setSelectedAmount(amount);
+        setAmountToRecharge(amount);
     };
 
     const handleCloseSnackbar = () => setOpenSnackbar(false);
@@ -54,6 +66,19 @@ const RechargeModal = ({ open, handleClose, rechargeOptions, setBalance }) => {
                     <Typography variant="h6" component="h2" mb={2}>
                         Añadir fondos
                     </Typography>
+                    <Grid container spacing={2} mb={2}>
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Monto Personalizado"
+                                variant="outlined"
+                                fullWidth
+                                value={amountToRecharge}
+                                onChange={handleCustomAmountChange}
+                                inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                            />
+                        </Grid>
+                    </Grid>
+
                     <Grid container spacing={2}>
                         {rechargeOptions.map((amount, index) => (
                             <Grid item xs={3} key={index}>
@@ -63,10 +88,10 @@ const RechargeModal = ({ open, handleClose, rechargeOptions, setBalance }) => {
                             </Grid>
                         ))}
                     </Grid>
-                    {selectedAmount !== null && (
+                    {amountToRecharge && (
                         <Box mt={3}>
                             <Button variant="contained" color="primary" onClick={handleRechargeClick}>
-                                Confirmar ₡{selectedAmount.toLocaleString()}
+                                Confirmar ₡{Number(amountToRecharge).toLocaleString()}
                             </Button>
                         </Box>
                     )}

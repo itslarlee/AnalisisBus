@@ -51,12 +51,19 @@ function Perfil() {
                                 {`${userDB.username} - ${userDB.role}`}
                             </Typography>
 
-                            <Typography variant="h3" gutterBottom>
-                                ₡{balance !== null ? balance.toLocaleString() : 'Cargando...'}
-                            </Typography>
-                            <Button variant="contained" onClick={handleOpen} sx={{ mt: 2 }}>
-                                + Agregar fondos
-                            </Button>
+                            {
+                                userDB.role === 'Cliente' && (
+                                    <>
+                                        <Typography variant="h3" gutterBottom>
+                                            ₡{balance !== null ? balance.toLocaleString() : 'Cargando...'}
+                                        </Typography>
+                                        <Button variant="contained" onClick={handleOpen} sx={{ mt: 2 }}>
+                                            + Agregar fondos
+                                        </Button>
+                                    </>
+                                )
+                            }
+
                         </CardContent>
                     </Card>
                     <RechargeModal
