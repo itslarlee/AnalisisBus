@@ -2,13 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useIdentity } from '../providers/IdentityProvider';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, Typography, TextField } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 function ReportesChofer() {
-    const [dailyIncome, setDailyIncome] = useState([]);
     const { user } = useIdentity();
     const [rejectedUserDetails, setRejectedUserDetails] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -100,12 +98,7 @@ function ReportesChofer() {
                 incomeByDay[date] += data.costo;
             });
 
-            // Convert the incomeByDay object into an array and sort by date
-            const sortedIncome = Object.entries(incomeByDay)
-                .map(([date, total]) => ({ date, total }))
-                .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date in descending order
 
-            setDailyIncome(sortedIncome);
             // Process failed charges for rejected users
             const rejectionsByDay = {};
             failedChargesSnapshot.forEach(doc => {
@@ -171,30 +164,6 @@ function ReportesChofer() {
                     </TableBody>
                 </Table>
             </TableContainer>
-
-            <Typography variant='h5' gutterBottom style={{ marginTop: '20px' }}>
-                Ingresos Diarios
-            </Typography>
-
-            <BarChart
-                width={500}
-                height={300}
-                data={dailyIncome}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="total" fill="#8884d8" name="Ingresos" />
-            </BarChart>
-
 
             <Typography variant='h5' gutterBottom style={{ marginTop: '20px' }}>
 

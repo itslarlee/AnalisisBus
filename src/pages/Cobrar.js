@@ -152,7 +152,7 @@ function Cobrar() {
                 </Typography>
                 {ruta && (
                     <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                        Ruta Asignada: {ruta.nombreRuta} - Costo: ₡{costoRuta}
+                        Ruta Asignada: {ruta.nombreRuta} | Costo: ₡{costoRuta}
                     </Typography>
                 )}
                 <TextField
