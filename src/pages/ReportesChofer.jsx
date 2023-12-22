@@ -3,17 +3,58 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useIdentity } from '../providers/IdentityProvider';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, Typography } from '@mui/material';
-
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, Typography, TextField } from '@mui/material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 function ReportesChofer() {
     const [dailyIncome, setDailyIncome] = useState([]);
-    const [rejectedUsers, setRejectedUsers] = useState([]);
     const { user } = useIdentity();
     const [rejectedUserDetails, setRejectedUserDetails] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [dailyIncomes, setDailyIncomes] = useState([]);
+    const [totalDailyIncome, setTotalDailyIncome] = useState(0);
+
+    const getUsernameChofer = (email) => email.split('@')[0];
+
+    // New function to handle fetching incomes for a specific day
+    const fetchIncomesForDate = async (date) => {
+        const dateString = date.toISOString().split('T')[0]; // Format selected date as YYYY-MM-DD
+        const chargesRef = collection(db, 'charges');
+        const chargesQuery = query(
+            chargesRef,
+            where('usernameChofer', '==', getUsernameChofer(user.email)),
+            where('fechaCobro', '>=', new Date(dateString)),
+            where('fechaCobro', '<', new Date(dateString + 'T23:59:59')) // End of the selected date
+        );
+
+        const querySnapshot = await getDocs(chargesQuery);
+        let incomes = [];
+        let totalIncome = 0;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const income = {
+                id: doc.id,
+                usernameCliente: data.usernameCliente,
+                route: data.codigoRuta,
+                cost: data.costo,
+                date: data.fechaCobro.toDate().toLocaleTimeString(), // Format time for display
+            };
+            incomes.push(income);
+            totalIncome += data.costo;
+        });
+
+        setDailyIncomes(incomes);
+        setTotalDailyIncome(totalIncome);
+    };
 
     useEffect(() => {
-        const getUsernameChofer = (email) => email.split('@')[0];
+        if (user?.email) {
+            fetchIncomesForDate(selectedDate);
+        }
+    }, [selectedDate, user?.email]);
+    useEffect(() => {
 
         const fetchDriverData = async (driverUsername) => {
             const chargesRef = collection(db, 'charges');
@@ -25,21 +66,26 @@ function ReportesChofer() {
             const failedChargesSnapshot = await getDocs(failedChargesQuery);
 
 
-            // Process failed charges for rejected users
             const rejectionsDetails = [];
             failedChargesSnapshot.forEach(doc => {
                 const data = doc.data();
-                const date = data.fecha.toDate().toLocaleDateString();
+                const dateObject = data.fecha.toDate(); // Get the Date object for sorting
                 rejectionsDetails.push({
                     username: data.usernameCliente, // Replace with actual field name if different
                     route: data.codigoRuta, // Replace with actual field name if different
                     cost: data.costo, // Replace with actual field name if different
-                    date: date
+                    date: dateObject.toLocaleDateString(), // Format the date for display
+                    dateObject: dateObject // Store the Date object for sorting
                 });
             });
 
-            // Update state with the details of rejected users
-            setRejectedUserDetails(rejectionsDetails);
+            // Sort rejectionsDetails by the dateObject
+            rejectionsDetails.sort((a, b) => b.dateObject - a.dateObject);
+
+            // Remove the dateObject property before setting state
+            const sortedRejections = rejectionsDetails.map(({ dateObject, ...rest }) => rest);
+
+            setRejectedUserDetails(sortedRejections);
 
             const incomeByDay = {};
             chargesSnapshot.forEach(doc => {
@@ -69,7 +115,6 @@ function ReportesChofer() {
             });
 
 
-            setRejectedUsers(Object.entries(rejectionsByDay).map(([date, count]) => ({ date, count })));
         };
 
         if (user?.email) {
@@ -80,6 +125,53 @@ function ReportesChofer() {
 
     return (
         <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+
+            {/* Table for Incomes of Selected Date */}
+            <Typography variant='h5' gutterBottom style={{ marginTop: '20px' }}>
+
+                Ingresos del {selectedDate.toLocaleDateString()}
+            </Typography>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                    label="Seleccionar fecha"
+                    value={selectedDate}
+                    onChange={(newDate) => setSelectedDate(newDate)}
+                    renderInput={(params) => <TextField {...params} />}
+                />
+            </LocalizationProvider>
+
+            <TableContainer component={Paper} style={{ marginTop: '20px', maxWidth: 700 }}>
+                <Table aria-label="simple table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Ruta</TableCell>
+                            <TableCell>Cliente</TableCell>
+                            <TableCell align="right">Costo</TableCell>
+                            <TableCell align="right">Hora</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {dailyIncomes.map((income) => (
+                            <TableRow key={income.id}>
+                                <TableCell component="th" scope="row">
+                                    {income.route}
+                                </TableCell>
+                                <TableCell component="th" scope="row">
+                                    {income.usernameCliente}
+                                </TableCell>
+                                <TableCell align="right">{income.cost}</TableCell>
+                                <TableCell align="right">{income.date}</TableCell>
+                            </TableRow>
+                        ))}
+                        {/* Row to display the total income */}
+                        <TableRow>
+                            <TableCell colSpan={2}>Total Ingresos</TableCell>
+                            <TableCell align="right">{totalDailyIncome}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
             <Typography variant='h5' gutterBottom style={{ marginTop: '20px' }}>
                 Ingresos Diarios
             </Typography>
@@ -104,7 +196,8 @@ function ReportesChofer() {
             </BarChart>
 
 
-            <Typography variant="h6" gutterBottom style={{ marginTop: '20px' }}>
+            <Typography variant='h5' gutterBottom style={{ marginTop: '20px' }}>
+
                 Usuarios Rechazados
             </Typography>
             <TableContainer component={Paper} style={{ marginTop: '20px', maxWidth: 700 }}>
@@ -132,28 +225,7 @@ function ReportesChofer() {
                 </Table>
             </TableContainer>
 
-            <Typography variant="h5" gutterBottom style={{ marginTop: '20px' }}>
-                Usuarios Rechazados
-            </Typography>
 
-            <BarChart
-                width={500}
-                height={300}
-                data={rejectedUsers}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" fill="#82ca9d" name="Rechazados" />
-            </BarChart>
         </Box>
     );
 }

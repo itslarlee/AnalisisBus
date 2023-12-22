@@ -16,6 +16,7 @@
     "credit-card-type": "^9.1.0",
     "creditcard.js": "^3.0.31",
     "crypto-js": "^4.2.0",
+    "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",
     "firebase": "^9.22.1",
     "formik": "^2.4.5",
